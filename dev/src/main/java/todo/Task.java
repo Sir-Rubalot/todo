@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 
 @Entity
 public class Task {
+    public Task() {}
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,16 +16,12 @@ public class Task {
     private String description;
     private String status;
 
-    // Tom konstruktor krävs av JPA
-    public Task() {}
-
     public Task(String title, String description, String status) {
         this.title = title;
         this.description = description;
         this.status = status;
     }
 
-    // Getters och Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }

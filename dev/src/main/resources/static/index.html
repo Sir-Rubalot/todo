@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>My Todo</title>
+    <link rel="stylesheet" href="/css/Styles.css">
     <style>
         body { font-family: Arial, sans-serif; display: flex; gap: 20px; padding: 20px; background: #f4f5f7; }
         .column { background: #ebecf0; padding: 10px; border-radius: 5px; width: 300px; min-height: 400px; }
@@ -11,75 +12,130 @@
     </style>
 </head>
 <body>
-
     <div class="column" id="todo-column">
         <h3>Todo</h3>
-        <input type="text" id="newTaskTitle" placeholder="Ny uppgift...">
-        <button onclick="addTask()">Lägg till</button>
+        <input type="text" id="newTaskTitle" placeholder="Add task...">
+        <button onclick="addTask()">Add</button>
         <div id="todo-list"></div>
     </div>
-
     <div class="column" id="doing-column">
         <h3>Ongoing</h3>
         <div id="doing-list"></div>
     </div>
-
     <div class="column" id="done-column">
         <h3>Done</h3>
         <div id="done-list"></div>
     </div>
-
     <script>
         const apiUrl = '/api/tasks';
-
         async function fetchTasks() {
-            const response = await fetch(apiUrl);
-            const tasks = await response.json();
-            
-            document.getElementById('todo-list').innerHTML = '';
-            document.getElementById('doing-list').innerHTML = '';
-            document.getElementById('done-list').innerHTML = '';
+            try {
+                const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const tasks = await response.json();
+                    
+                    document.getElementById('todo-list').innerHTML = '';
+                    document.getElementById('doing-list').innerHTML = '';
+                    document.getElementById('done-list').innerHTML = '';
 
-            tasks.forEach(task => {
-                const card = `<div class="card">
-                    <strong>${task.title}</strong>
-                    <br><br>
-                    <button onclick="moveTask(${task.id}, 'DOING')">Flytta till Pågår</button>
-                    <button onclick="moveTask(${task.id}, 'DONE')">Flytta till Klart</button>
-                </div>`;
+                    tasks.forEach(task => {
+                        const card = `<div class="card">
+                            <strong>${task.title}</strong>
+                            ${task.description ? `<p>${task.description}</p>` : ''} <!-- Visa beskrivning om den finns -->
+                            <div class="card-buttons">
+                                <button onclick="moveTask(${task.id}, 'DOING')">Move to 'Ongoing'</button>
+                                <button onclick="moveTask(${task.id}, 'DONE')">Move to 'Done'</button>
+                                <button onclick="deleteTask(${task.id})" class="delete-button">X</button>
+                            </div>
+                        </div>`;
 
-                if (task.status === 'TODO') document.getElementById('todo-list').innerHTML += card;
-                else if (task.status === 'DOING') document.getElementById('doing-list').innerHTML += card;
-                else if (task.status === 'DONE') document.getElementById('done-list').innerHTML += card;
-            });
-        }
+                        if (task.status === 'TODO') document.getElementById('todo-list').innerHTML += card;
+                        else if (task.status === 'DOING') document.getElementById('doing-list').innerHTML += card;
+                        else if (task.status === 'DONE') document.getElementById('done-list').innerHTML += card;
+                    });
+                } catch (error) {
+                    console.error("Fel vid hämtning av tasks:", error);
+                }
+            }
 
-        async function addTask() {
-            const title = document.getElementById('newTaskTitle').value;
-            if (!title) return;
+            async function addTask() {
+                const title = document.getElementById('newTaskTitle').value;
+                if (!title.trim()) {
+                    alert("Uppgiften måste ha en titel!");
+                    return;
+                }
+                const description = ""; // Du kan lägga till ett inputfält för beskrivning också om du vill
 
-            await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: title, status: 'TODO' })
-            });
-            document.getElementById('newTaskTitle').value = '';
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: title, description: description, status: 'TODO' })
+                    });
+                    if (!response.ok) {
+                         const errorData = await response.json();
+                         console.error("Fel vid skapande av task:", errorData);
+                         alert("Kunde inte lägga till uppgift: " + (errorData.title || "Okänt fel"));
+                         return;
+                    }
+                    document.getElementById('newTaskTitle').value = '';
+                    fetchTasks();
+                } catch (error) {
+                    console.error("Fel vid skapande av task:", error);
+                }
+            }
+
+            async function moveTask(id, newStatus) {
+                try {
+                    const currentTaskResponse = await fetch(`${apiUrl}/${id}`);
+                    if (!currentTaskResponse.ok) throw new Error(`HTTP error! status: ${currentTaskResponse.status}`);
+                    const currentTask = await currentTaskResponse.json();
+
+                    currentTask.status = newStatus;
+                    const response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(currentTask)
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    fetchTasks();
+                } catch (error) {
+                    console.error("Fel vid flytt av task:", error);
+                }
+            }
+
+            // NY FUNKTION: deleteTask
+            async function deleteTask(id) {
+                // Fråga användaren om de är säkra innan radering
+                if (!confirm("Är du säker på att du vill radera denna uppgift?")) {
+                    return; // Användaren ångrade sig
+                }
+
+                try {
+                    const response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'DELETE' // Använd DELETE HTTP-metoden
+                    });
+
+                    if (!response.ok) {
+                        // Om servern returnerar ett fel (t.ex. 404 om tasken inte finns)
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    // Om raderingen lyckades, ladda om listan med tasks för att uppdatera UI
+                    fetchTasks();
+                    console.log(`Task med ID ${id} raderad.`);
+                } catch (error) {
+                    console.error("Fel vid radering av task:", error);
+                    alert("Kunde inte radera uppgiften. Se konsolen för detaljer.");
+                }
+            }
+
+            // Ladda uppgifter vid start
             fetchTasks();
-        }
-
-        async function moveTask(id, newStatus) {
-            // I en riktig app skulle du hämta hela tasken först och uppdatera statusen,
-            // eller skapa en specifik endpoint för statusändringar.
-            await fetch(`${apiUrl}/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: "Uppdaterad (Behåll titel i full app)", status: newStatus })
-            });
-            fetchTasks();
-        }
-
-        // Ladda uppgifter vid start
-        fetchTasks();
     </script>
 </body>
 </html>
