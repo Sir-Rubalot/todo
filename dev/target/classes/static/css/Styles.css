@@ -37,7 +37,6 @@ body {
 .card:last-child {
     margin-bottom: 0;
 }
-
 input[type="text"] {
     width: 100%;
     padding: 8px 12px;
@@ -47,7 +46,6 @@ input[type="text"] {
     box-sizing: border-box;
     font-size: 0.9em;
 }
-
 button {
     background-color: #5aac44;
     color: white;
@@ -60,11 +58,9 @@ button {
     box-sizing: border-box;
     margin-bottom: 5px;
 }
-
 button:hover {
     background-color: #61bd4f;
 }
-
 .card button {
     width: auto;
     padding: 5px 8px;
@@ -86,7 +82,6 @@ button:hover {
 .card button.delete-button:hover {
     background-color: brown;
 }
-
 @media (max-width: 768px) {
     body {
         flex-direction: column;
@@ -94,6 +89,6 @@ button:hover {
     }
     .column {
         width: 90%;
-        max-width: 400px; /* Max bredd */
+        max-width: 400px;
     }
 }

@@ -58,7 +58,7 @@ public class TaskController {
             task.setDescription(updatedTask.getDescription());
             task.setStatus(updatedTask.getStatus());
             return repository.save(task);
-        }).orElseThrow(() -> new RuntimeException("Task not found")); // För en PUT bör du kasta en 404, men detta duger för tillfället.
+        }).orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
     @DeleteMapping("/{id}")

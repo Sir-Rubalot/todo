@@ -59,15 +59,13 @@
                     console.error("Fel vid hämtning av tasks:", error);
                 }
             }
-
             async function addTask() {
                 const title = document.getElementById('newTaskTitle').value;
                 if (!title.trim()) {
                     alert("Uppgiften måste ha en titel!");
                     return;
                 }
-                const description = ""; // Du kan lägga till ett inputfält för beskrivning också om du vill
-
+                const description = ""; 
                 try {
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -86,7 +84,6 @@
                     console.error("Fel vid skapande av task:", error);
                 }
             }
-
             async function moveTask(id, newStatus) {
                 try {
                     const currentTaskResponse = await fetch(`${apiUrl}/${id}`);
@@ -107,25 +104,18 @@
                     console.error("Fel vid flytt av task:", error);
                 }
             }
-
-            // NY FUNKTION: deleteTask
             async function deleteTask(id) {
-                // Fråga användaren om de är säkra innan radering
                 if (!confirm("Är du säker på att du vill radera denna uppgift?")) {
-                    return; // Användaren ångrade sig
+                    return; 
                 }
-
                 try {
                     const response = await fetch(`${apiUrl}/${id}`, {
-                        method: 'DELETE' // Använd DELETE HTTP-metoden
+                        method: 'DELETE'
                     });
 
                     if (!response.ok) {
-                        // Om servern returnerar ett fel (t.ex. 404 om tasken inte finns)
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
-                    // Om raderingen lyckades, ladda om listan med tasks för att uppdatera UI
                     fetchTasks();
                     console.log(`Task med ID ${id} raderad.`);
                 } catch (error) {
@@ -133,8 +123,6 @@
                     alert("Kunde inte radera uppgiften. Se konsolen för detaljer.");
                 }
             }
-
-            // Ladda uppgifter vid start
             fetchTasks();
     </script>
 </body>
