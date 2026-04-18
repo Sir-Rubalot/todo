@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>My Todo</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; gap: 20px; padding: 20px; background: #f4f5f7; }
+        .column { background: #ebecf0; padding: 10px; border-radius: 5px; width: 300px; min-height: 400px; }
+        .card { background: white; padding: 10px; margin-bottom: 10px; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        input, button { padding: 8px; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <div class="column" id="todo-column">
+        <h3>Todo</h3>
+        <input type="text" id="newTaskTitle" placeholder="Ny uppgift...">
+        <button onclick="addTask()">Lägg till</button>
+        <div id="todo-list"></div>
+    </div>
+
+    <div class="column" id="doing-column">
+        <h3>Ongoing</h3>
+        <div id="doing-list"></div>
+    </div>
+
+    <div class="column" id="done-column">
+        <h3>Done</h3>
+        <div id="done-list"></div>
+    </div>
+
+    <script>
+        const apiUrl = '/api/tasks';
+
+        async function fetchTasks() {
+            const response = await fetch(apiUrl);
+            const tasks = await response.json();
+            
+            document.getElementById('todo-list').innerHTML = '';
+            document.getElementById('doing-list').innerHTML = '';
+            document.getElementById('done-list').innerHTML = '';
+
+            tasks.forEach(task => {
+                const card = `<div class="card">
+                    <strong>${task.title}</strong>
+                    <br><br>
+                    <button onclick="moveTask(${task.id}, 'DOING')">Flytta till Pågår</button>
+                    <button onclick="moveTask(${task.id}, 'DONE')">Flytta till Klart</button>
+                </div>`;
+
+                if (task.status === 'TODO') document.getElementById('todo-list').innerHTML += card;
+                else if (task.status === 'DOING') document.getElementById('doing-list').innerHTML += card;
+                else if (task.status === 'DONE') document.getElementById('done-list').innerHTML += card;
+            });
+        }
+
+        async function addTask() {
+            const title = document.getElementById('newTaskTitle').value;
+            if (!title) return;
+
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, status: 'TODO' })
+            });
+            document.getElementById('newTaskTitle').value = '';
+            fetchTasks();
+        }
+
+        async function moveTask(id, newStatus) {
+            // I en riktig app skulle du hämta hela tasken först och uppdatera statusen,
+            // eller skapa en specifik endpoint för statusändringar.
+            await fetch(`${apiUrl}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: "Uppdaterad (Behåll titel i full app)", status: newStatus })
+            });
+            fetchTasks();
+        }
+
+        // Ladda uppgifter vid start
+        fetchTasks();
+    </script>
+</body>
+</html>
